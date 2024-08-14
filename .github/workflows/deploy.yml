@@ -25,7 +25,7 @@ jobs:
                   # 按需选择是否使用 hugo-extended
 
             - name: build
-              run: hugo
+              run: hugo -D
 
             - name: deploy
               uses: peaceiris/actions-gh-pages@v3
