@@ -1,5 +1,5 @@
 ---
-title: "hugo博客搭建部署"
+title: "hugo 博客搭建部署 "
 date: 2020-10-11T21:36:00+08:00
 draft: true
 image: 
@@ -11,7 +11,7 @@ categories: [技术]
 
 ### Hugo 安装
 
-- 下载[安装包](https://github.com/gohugoio/hugo/releases)
+- 下载 [安装包](https://github.com/gohugoio/hugo/releases)
 - `hugo version` 查看是否安装成功
 
 ### 生成站点基础框架
@@ -28,12 +28,13 @@ git init
 
 - 进入 [Hugo 主题页面](https://themes.gohugo.io/) 选择主题并下载 
 
-> 个人喜欢的两个主题：[meme](https://github.com/reuixiy/hugo-theme-meme)、[newsroom](https://themes.gohugo.io/newsroom/)、[Swift](https://themes.gohugo.io/hugo-swift-theme/)
+> 个人喜欢的主题：[meme](https://github.com/reuixiy/hugo-theme-meme)、[newsroom](https://themes.gohugo.io/newsroom/)、[galary](https://themes.gohugo.io/themes/hugo-theme-gallery/)、[Alpha Church](https://themes.gohugo.io/themes/alpha-church/)、[Moments](https://themes.gohugo.io/themes/hugo-theme-moments/)
 
 ```bash
+# meme
 # 下载主题
 git submodule add --depth 1 https://github.com/reuixiy/hugo-theme-meme.git themes/meme
-# 替换toml文件
+# 替换 toml 文件
 rm config.toml && cp themes/meme/config-examples/en/config.toml config.toml
 ```
 ### 新建博客
@@ -56,7 +57,136 @@ hugo server -D
 
 调试没有问题运行 `hugo` 在当前目录下生成 `public` 子目录
 
+## Github 部署
+
+### 1. 新建 Github Pages 仓库
+
+仓库用来存放生成的静态页面
+
+仓库名称：`username.github.io`
+
+需要保证有一个分支，通过本地推送一个 `master` 分支
+
+1. `git clone git@github.com:username/username.github.io.git` 
+
+`username` 替换为自己的用户名
+
+2. `touch .gitignore` 
+
+3. `git add .`
+
+4. `git commit -m "first commit"`
+
+5. `git push --set-upstream origin master`
+
+### 2. 生成 GITHUB ACTION token
+
+1. 网页版，点击头像，进入 Github 个人的 Settings：
+
+2. 边栏最下方 Developer Settings，
+
+3. 选择 [Personal access tokens]((https://github.com/settings/tokens)) 下的 Tokens (classic)
+点击右方 Generate a new token (classic)
+
+4. 输入密码后进入设置，在 Note 框中填写方便识别的名字，如 Deploy，有效期（Expiration）建议选择永不过期（No expiration），访问范围（Scopes）我们需要选中 repo 和 workflow
+
+5. 点击生成后 token 即出现，注意它只会出现这唯一的一次，将其复制保存下来
+
+### 3. 新建博客仓库
+
+仓库用来写博文，执行 Github Actions 自动构建静态页面推送到上面的 Github Pages 仓库中
+
+1. `git clone git@github.com:username/blog.git`
+
+2. `vim .gitignore`
+
+忽略那些无关的文件，和生成的静态文件
+
+```bash
+.DS_Store
+/public
+.hugo_build.lock
+resources/_gen/assets/scss
+```
+
+3. `git add . & git commit -m "first commit"`
+
+4. `git push --set-upstream origin master`
+
+5. 进入仓库的 Settings
+
+6. 选择 Secrets and variables 下的 Actions，在右侧选择 New repository secret
+
+7. 在 Name 中填入 PERSONAL_TOKEN
+
+8. 在 Secret 中填入刚才生成的 token
+
+9. 点击 Add secret 保存
+
+### 4. 配置 Github Actions
+
+1. 进入仓库的 Actions，若之前有使用过，点击左侧 New workflow；若无，默认会给出许多推荐，我们任选一个开始 configure 即可：
+
+2. 重命名 .yml 为方便识别的名字，如 deploy.yml
+
+修改编辑框内容如下：
+
+```yaml
+name: deploy 
+# 这个 action 的名字
+
+on:
+    push: 
+    # 代表每次 push 都会 turn on action
+    workflow_dispatch: 
+    # 代表我们也可以手动 turn on
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: checkout
+              uses: actions/checkout@v2
+              with:
+                  submodules: true
+                  fetch-depth: 0
+
+            - name: setup
+              uses: peaceiris/actions-hugo@v2.6.0
+              with:
+                  hugo-version: "latest"
+                  extended: true 
+                  # 按需选择是否使用 hugo-extended
+
+            - name: build
+              run: hugo -D
+
+            - name: deploy
+              uses: peaceiris/actions-gh-pages@v3
+              with:
+                  # 生成的 token 就用在这里，因为下面用到 external repository
+                  PERSONAL_TOKEN: ${{ secrets.PERSONAL_TOKEN }} 
+                  # 替换为新建 Github Pages 仓库中的仓库名称
+                  EXTERNAL_REPOSITORY: username/username.github.io
+                   # 以及对应的分支 master
+                  PUBLISH_BRANCH: master 
+                  # 指定将自动部署得到的 public 文件夹 push 上去
+                  PUBLISH_DIR: ./public 
+                  # 提交信息
+                  commit_message: ${{ github.event.head_commit.message }}
+```
+
+3. 点击左上角 Save new workflow，保存配置文件并提交，自动触发构建
+
+4. 构建成功即可访问对应仓库的 Github Pages 地址 `https://purenjie.github.io/`
+
+### 5. 后续更新
+
+后续只需要在 blog 仓库中更新博文，然后 push 即可触发 Github Actions 自动构建并推送到 Github Pages 仓库中
+
 ## Gitee 部署
+
+> Gitee 已经无法使用 Pages，不建议使用
 
 - 新建仓库
 
@@ -93,7 +223,7 @@ mkdir /home/solejay/blog
 
 # 使用 rsync 方式同步
 cd BLOG_FOLDER # 本地
-rsync -avuz --progress --delete public/ root@ip地址:/home/solejay/blog
+rsync -avuz --progress --delete public/ root@ip 地址:/home/solejay/blog
 ```
 
 4. [申请 ssl 证书](https://console.cloud.tencent.com/ssl/dsc/apply)
@@ -103,7 +233,7 @@ rsync -avuz --progress --delete public/ root@ip地址:/home/solejay/blog
 - 将证书上传到服务器
 
 ```bash
-rsync -avuz --progress Nginx/ root@ip地址:/etc/nginx/
+rsync -avuz --progress Nginx/ root@ip 地址:/etc/nginx/
 ```
 
 - 配置 nginx.conf
@@ -173,7 +303,7 @@ http {
     }
 
 
-    # 配置https
+    # 配置 https
      server {
          listen 443 ssl;
          # 要配置的第七个地方
@@ -207,7 +337,7 @@ http {
 # 重新加载配置文件
 sudo nginx -s reload
 
-# 重启nginx
+# 重启 nginx
 sudo systemctl restart nginx
 ```
 
@@ -215,7 +345,7 @@ sudo systemctl restart nginx
 
 ![请求成功](https://gitee.com/solejay/pic_repo/raw/master/2023/2/15-1676438397457.png)
 
-**参考资料**
+** 参考资料 **
 
 [Hugo+Gitee 搭建个人博客](https://zhuanlan.zhihu.com/p/184625753)
 
