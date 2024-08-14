@@ -352,3 +352,5 @@ sudo systemctl restart nginx
 [如何使用 Hugo 在 GitHub Pages 上搭建免费个人网站](https://zhuanlan.zhihu.com/p/37752930)
 
 [hugo 博客部署到腾讯云轻量级服务器](https://cloud.tencent.com/developer/article/1944134)
+
+[使用 Github Actions 自动部署 Hugo](https://fanrongbin.com/github-actions-deploy-hugo/)
