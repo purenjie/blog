@@ -3,6 +3,7 @@ name: deploy
 
 on:
     push: 
+        branches: [master]
     # 代表每次 push 都会 turn on action
     workflow_dispatch: 
     # 代表我们也可以手动 turn on
